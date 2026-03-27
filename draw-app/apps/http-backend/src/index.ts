@@ -31,7 +31,6 @@ app.post("/signup", async (req, res) => {
     message:"user already exist"
   })
 }
-
 });
 //check the hashed password later
 app.post("/signin", async (req, res) => {
@@ -73,7 +72,6 @@ app.post("/room", middleware, async (req, res) => {
     });
     return;
   }
-
   const userId=req.userId
   if(!userId){
     res.status(403).json({
@@ -97,7 +95,20 @@ app.post("/room", middleware, async (req, res) => {
     message:"room already exists"
   })
 }
-
 });
-
+app.get("/chats/:roomId",async(req,res)=>{
+  const roomId=Number(req.params.roomId);
+  const messages=await prismaClient.room.findMany({
+    where:{
+      id:roomId
+    },
+    orderBy:{
+      id:"desc"
+    },
+    take:50
+  });
+  res.json({
+    messages
+  })
+})
 app.listen(3001);
