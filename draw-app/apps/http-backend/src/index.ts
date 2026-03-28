@@ -6,6 +6,18 @@ import { CreateUserSchema,signinSchema,CreateRoomSchema } from "@repo/common/typ
 import { prismaClient } from "@repo/db/client";
 const app = express();
 app.use(express.json())
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
 //should hash the password later 
 app.post("/signup", async (req, res) => {
   const Parsedata = CreateUserSchema.safeParse(req.body);
@@ -105,10 +117,24 @@ app.get("/chats/:roomId",async(req,res)=>{
     orderBy:{
       id:"desc"
     },
-    take:50
+    take:50,
+    include:{
+      user:{
+        select:{ name:true, id:true }
+      }
+    }
   });
   res.json({
     messages
   })
 })
+
+app.get("/rooms", middleware, async (req, res) => {
+  const rooms = await prismaClient.room.findMany({
+    orderBy: { CreatedAt: "desc" },
+    select: { id: true, Slug: true, CreatedAt: true, admin: { select: { name: true } } }
+  });
+  res.json({ rooms });
+});
+
 app.listen(3001);
